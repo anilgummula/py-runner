@@ -403,21 +403,27 @@ print(&quot;hello from your pocket&quot;)"></textarea>
   });
 
   async function boot() {
+    setStatus('loading', 'waking up…');
     try {
-      pyodide = await loadPyodide();
+      pyodide = await loadPyodide({
+        indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.28.3/full/'
+      });
       ready = true;
       runBtn.disabled = false;
       runBtnLabel.textContent = '▶ run';
       setStatus('ready', 'interpreter ready');
     } catch (err) {
-      setStatus('error', 'failed to load — check connection & reload');
+      setStatus('error', 'failed to load: ' + (err && err.message ? err.message : err));
+      runBtn.disabled = false;
+      runBtnLabel.textContent = '↻ retry';
+      runBtn.onclick_retry = true;
     }
   }
-  setStatus('loading', 'waking up…');
   boot();
   loadScripts();
 
   runBtn.addEventListener('click', async () => {
+    if (!ready && !running) { boot(); return; }
     if (!ready || running) return;
     const code = codeEl.value;
     if (!code.trim()) { writeOutput('(nothing to run)\n', false); return; }
